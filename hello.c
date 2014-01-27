@@ -1,4 +1,4 @@
-//hola.c
+//hola.c para generar error
 
 #include <stdio.h>
 
