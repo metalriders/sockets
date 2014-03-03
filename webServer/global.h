@@ -13,4 +13,10 @@
 #define MINPORT 1
 #define MAXPORT 65000
 
+char * itoa(int i) {
+  char * res = malloc(8*sizeof(int));
+  sprintf(res, "%d", i);
+  return res;
+}
+
 #endif

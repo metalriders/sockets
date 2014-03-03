@@ -62,11 +62,13 @@ void clientProccess(const int clientSocket) {
 	int file;
 	int readBytes;
 	int firstFlag;
+	int tmp_size;
 	
 	char *type;
 	char *request;
 	char *protocol;
 	char *pch;
+	char *size;
 
 	debug(2,"Inicio del proceso del Cliente\n");
 	
@@ -134,24 +136,33 @@ void clientProccess(const int clientSocket) {
 	if(strlen(request) == 0){
 		sendStatus(clientSocket, "HTTP/1.1 200 OK");
 	} else{
-		debug(4,"Tried to open file %s", request);
 		file = open(request, O_RDONLY);			
 
 		if(file == -1) {
+			debug(4,"Error while open file %s", request);
 			sendStatus(clientSocket, "HTTP/1.1 404 Not Found");
 			strcpy(html, "<html><head><title>404 NOT FOUND</title></head><body>NO EXISTE!!!</body></html>\r\n");			
 			sendTCPLine4(clientSocket, html,strlen(html));
 			
 			error(errno, "No se pudo abrir el archivo");
 		}else{
-			sendStatus(clientSocket, "HTTP/1.1 200 OK");
-			strcpy(html, content);
-			strcat(html, "\r\n");
-			sendTCPLine4(clientSocket, html, strlen(html));
+			debug(4,"Preparing to send file %s", request);
 
-			while((readBytes = read(file,buffer,255))>0) {
+			sendStatus(clientSocket, "HTTP/1.1 200 OK");
+			while((readBytes = read(file,buffer,255))>0) {		//Send file to client
 				sendTCPLine4(clientSocket,buffer,readBytes);
 			}
+
+			strcpy(html, content);				//Send Content-type
+			strcat(html, "\r\n");
+			
+			tmp_size = (int)fsize(request);			//Get size of file
+			size = itoa (tmp_size);
+
+			strcpy(html, "Content-lenght: ");		//Send Content-lenght
+			strcat(html, size);
+			strcat(html, "\r\n");
+			sendTCPLine4(clientSocket, html, strlen(html));
 		}
 	}
 	

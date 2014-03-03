@@ -16,6 +16,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 
 #include "debug.h"
@@ -24,6 +25,7 @@ int getNewTCPSocket(int addrType);
 
 int buildAddr4(struct sockaddr_in *addr, const char *ip, const u_short port);
 void sendStatus(const int socket, char *status_code);
+off_t fsize(const char *filename);
 
 int newTCPServerSocket4(const char *ip, const unsigned short port, const int q_size) {
 	int socketFD;
@@ -195,4 +197,13 @@ void sendStatus(const int socket, char *status_code){
 	strcpy(html, "\r\n");
 	sendTCPLine4(socket, html,strlen(html));
 	return;
+}
+
+off_t fsize(const char *filename) {
+    struct stat st; 
+
+    if (stat(filename, &st) == 0)
+        return st.st_size;
+
+    return -1; 
 }
