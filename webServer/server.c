@@ -57,7 +57,7 @@ int startServer(const unsigned int port) {
 void clientProccess(const int clientSocket) {
 	
 	char *buffer;
-	char *firstLine;
+	char *firstLine, *host, *usr_agent, *content;		//REQUEST HEADERS
 	char html[250];
 	int file;
 	int readBytes;
@@ -75,19 +75,42 @@ void clientProccess(const int clientSocket) {
 	protocol = calloc(255,1);
 
 	buffer = calloc(255,1);
+
 	firstLine = calloc(255,1);
-	firstFlag = TRUE;
+	host = calloc(255,1);
+	usr_agent = calloc(255,1);
+	content = calloc(255,1);
+
+	firstFlag = 1;
 	while(readTCPLine4(clientSocket,buffer,254)>0) {
 		debug(4,"%s",buffer);
 		if(strcmp(buffer,"\r\n")==0) {
 			break;
 		}
-		if(firstFlag) {				//Catch GET REQUEST FROM CLIENT
-			strcpy(firstLine,buffer);
-			firstFlag = FALSE;
+
+		switch(firstFlag){				
+			case 1: strcpy(firstLine, buffer);	//Catch request method from client
+				firstFlag++;
+				break;
+			case 2: strcpy(host, buffer);		//Catch host
+				firstFlag++;
+				break;
+			case 3: strcpy(usr_agent, buffer);	//Catch user agent from client
+				firstFlag++;
+				break;
+			case 4: strcpy(content, buffer);	//Catch all content-type used
+				firstFlag++;
+				break;
+			default: break;
 		}
 		bzero(buffer,255);
 	}	
+	
+	//REQUEST HEADERS
+	debug(4,"%s",firstLine);
+	debug(4,"%s",host);
+	debug(4,"%s",usr_agent);
+	debug(4,"%s",content);
 
 	// PROCESAR EL GET
 	debug(4,"First Line %s",firstLine);
@@ -122,6 +145,9 @@ void clientProccess(const int clientSocket) {
 			error(errno, "No se pudo abrir el archivo");
 		}else{
 			sendStatus(clientSocket, "HTTP/1.1 200 OK");
+			strcpy(html, content);
+			strcat(html, "\r\n");
+			sendTCPLine4(clientSocket, html, strlen(html));
 
 			while((readBytes = read(file,buffer,255))>0) {
 				sendTCPLine4(clientSocket,buffer,readBytes);
@@ -129,7 +155,6 @@ void clientProccess(const int clientSocket) {
 		}
 	}
 	
-
 	//strcpy(html, "Content-Type: text/html\r\n");
 	//sendTCPLine4(clientSocket, html, strlen(html));
 

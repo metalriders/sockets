@@ -176,8 +176,6 @@ int sendTCPLine4(const int socket, char *buffer, const unsigned int size ) {
 	int sentBytes = 0;
 	int writeBytes = 0;
 	
-	debug(2,"Se envio %s \n",buffer);
-
 	while((writeBytes = write(socket,buffer+sentBytes,size-sentBytes)) > 0) {
 		sentBytes += writeBytes;
 	}
@@ -193,9 +191,8 @@ void sendStatus(const int socket, char *status_code){
 	strcpy(html, status_code);
 	strcat(html, "\r\n");
 	sendTCPLine4(socket, html, strlen(html));
-
+	
 	strcpy(html, "\r\n");
 	sendTCPLine4(socket, html,strlen(html));
-
 	return;
 }
